@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { session, profile, loading, signOut } = useAuth()
+  const { session, profile, loading, authError, signOut, refreshProfile } = useAuth()
 
   if (loading) {
     return (
@@ -22,8 +22,32 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   if (!session) return <Navigate to="/login" replace />
 
-  // Session exists but the profiles row hasn't loaded yet (e.g. right after signup)
-  if (!profile) return null
+  // Session exists but the profiles row hasn't loaded yet (e.g. right after signup,
+  // or the profile fetch failed) — show a recoverable error instead of a blank page.
+  if (!profile) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-8 text-center">
+        <div className="font-display text-xl font-bold text-danger">Couldn't load your account</div>
+        <p className="mt-3 max-w-xs text-sm text-ink-soft">
+          {authError ?? 'Something went wrong while loading your profile.'}
+        </p>
+        <div className="mt-6 flex gap-3">
+          <button
+            onClick={() => refreshProfile()}
+            className="rounded-2xl bg-primary px-5 py-2.5 text-sm font-semibold text-white"
+          >
+            Try again
+          </button>
+          <button
+            onClick={signOut}
+            className="rounded-2xl border border-line bg-surface px-5 py-2.5 text-sm font-semibold text-ink-soft"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (profile.is_suspended) {
     return (

@@ -16,6 +16,7 @@ interface AuthContextValue {
   user: User | null
   profile: Profile | null
   loading: boolean
+  authError: string | null
   signUp: (params: SignUpParams) => Promise<{ error: string | null }>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [authError, setAuthError] = useState<string | null>(null)
 
   async function loadProfile(userId: string) {
     const { data, error } = await supabase
@@ -36,7 +38,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq('id', userId)
       .single()
 
-    if (!error) setProfile(data as Profile)
+    if (error) {
+      console.error('Failed to load profile:', error)
+      setProfile(null)
+      setAuthError(error.message)
+    } else {
+      setProfile(data as Profile)
+      setAuthError(null)
+    }
   }
 
   useEffect(() => {
@@ -54,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await loadProfile(session.user.id)
       } else {
         setProfile(null)
+        setAuthError(null)
       }
       setLoading(false)
     })
@@ -91,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user: session?.user ?? null,
     profile,
     loading,
+    authError,
     signUp,
     signIn,
     signOut,
