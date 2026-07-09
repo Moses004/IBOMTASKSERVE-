@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+
+@theme {
+  --font-display: 'Baloo 2', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  --color-canvas: #EAF3FC;
+  --color-surface: #FFFFFF;
+  --color-ink: #16223D;
+  --color-ink-soft: #6B7A94;
+  --color-ink-faint: #B9C4D6;
+  --color-primary: #1768D1;
+  --color-primary-deep: #0F4FA8;
+  --color-primary-soft: #E3EFFC;
+  --color-success: #21A366;
+  --color-success-soft: #DFF5EA;
+  --color-danger: #E24C4C;
+  --color-danger-soft: #FCE7E7;
+  --color-gold: #FFA726;
+  --color-line: #E7EEF7;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
