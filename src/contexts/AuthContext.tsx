@@ -16,6 +16,7 @@ interface AuthContextValue {
   user: User | null
   profile: Profile | null
   loading: boolean
+  authError: string | null
   signUp: (params: SignUpParams) => Promise<{ error: string | null }>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
@@ -28,28 +29,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [authError, setAuthError] = useState<string | null>(null)
 
   async function loadProfile(userId: string) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
 
-    if (!error) setProfile(data as Profile)
+      if (error) {
+        console.error('Failed to load profile:', error)
+        setAuthError(`Failed to load profile: ${error.message}`)
+        return
+      }
+
+      setProfile(data as Profile)
+      setAuthError(null)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error loading profile'
+      console.error('Profile load exception:', errorMessage)
+      setAuthError(errorMessage)
+    }
   }
 
   useEffect(() => {
     // Pick up any existing session on first load
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
-      if (session?.user) await loadProfile(session.user.id)
+      if (session?.user) {
+        await loadProfile(session.user.id)
+      }
       setLoading(false)
     })
 
     // Keep session + profile in sync with auth changes (login, logout, token refresh)
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session)
+      setAuthError(null)
       if (session?.user) {
         await loadProfile(session.user.id)
       } else {
@@ -91,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user: session?.user ?? null,
     profile,
     loading,
+    authError,
     signUp,
     signIn,
     signOut,
